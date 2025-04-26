@@ -14,7 +14,6 @@ export default async function handler(req) {
   }
 
   try {
-    // SoundCloud Downloader'a istek at
     const formData = new URLSearchParams();
     formData.append('url', url);
 
@@ -22,13 +21,13 @@ export default async function handler(req) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
       },
       body: formData.toString(),
     });
 
     const html = await response.text();
 
-    // Download linkini regex ile bul
     const downloadLinkMatch = html.match(/href="(https:\/\/[^"]+\/download\/[^"]+)"/);
 
     if (!downloadLinkMatch) {
@@ -40,8 +39,11 @@ export default async function handler(req) {
 
     const downloadLink = downloadLinkMatch[1];
 
-    // Şimdi indirilecek MP3 dosyasını alalım
-    const finalPage = await fetch(downloadLink);
+    const finalPage = await fetch(downloadLink, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
+      }
+    });
     const finalHtml = await finalPage.text();
 
     const mp3UrlMatch = finalHtml.match(/<source src="([^"]+)" type="audio\/mpeg">/);
