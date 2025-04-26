@@ -14,7 +14,11 @@ export default async function handler(req) {
   }
 
   try {
-    const response = await fetch(`https://soundcloudmp3.org/api/sc?url=${encodeURIComponent(url)}`);
+    const response = await fetch(`https://soundcloudmp3.org/api/sc?url=${encodeURIComponent(url)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+      }
+    });
     const data = await response.json();
 
     if (!data.link) {
