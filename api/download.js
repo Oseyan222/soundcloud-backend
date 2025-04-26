@@ -1,15 +1,20 @@
-import fetch from 'node-fetch';
-import cheerio from 'cheerio';
+export const config = {
+  runtime: 'edge',
+};
 
-export default async function handler(req, res) {
-  const { url } = req.query;
+export default async function handler(req) {
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get('url');
 
   if (!url) {
-    return res.status(400).json({ error: 'SoundCloud linki eksik.' });
+    return new Response(JSON.stringify({ error: 'SoundCloud linki eksik.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    // 1. SoundCloud linkini sclouddownloader.net'e POST et
+    // SoundCloud Downloader'a istek at
     const formData = new URLSearchParams();
     formData.append('url', url);
 
@@ -23,29 +28,43 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    // 2. Gelen HTML'den indirilebilir yeni sayfa linkini bul
-    const $ = cheerio.load(html);
-    const downloadLink = $('a.button').attr('href');
+    // Download linkini regex ile bul
+    const downloadLinkMatch = html.match(/href="(https:\/\/[^"]+\/download\/[^"]+)"/);
 
-    if (!downloadLink) {
-      return res.status(404).json({ error: 'İndirme linki bulunamadı.' });
+    if (!downloadLinkMatch) {
+      return new Response(JSON.stringify({ error: 'İndirme linki bulunamadı.' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // 3. Şimdi download linkine GET isteği atıp MP3 linki çıkar
+    const downloadLink = downloadLinkMatch[1];
+
+    // Şimdi indirilecek MP3 dosyasını alalım
     const finalPage = await fetch(downloadLink);
     const finalHtml = await finalPage.text();
-    const $$ = cheerio.load(finalHtml);
 
-    const mp3Url = $$('audio source').attr('src');
+    const mp3UrlMatch = finalHtml.match(/<source src="([^"]+)" type="audio\/mpeg">/);
 
-    if (!mp3Url) {
-      return res.status(404).json({ error: 'MP3 bulunamadı.' });
+    if (!mp3UrlMatch) {
+      return new Response(JSON.stringify({ error: 'MP3 bulunamadı.' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    return res.status(200).json({ mp3: mp3Url });
+    const mp3Url = mp3UrlMatch[1];
+
+    return new Response(JSON.stringify({ mp3: mp3Url }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Sunucu hatası.' });
+    return new Response(JSON.stringify({ error: 'Sunucu hatası.' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
