@@ -1,7 +1,7 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const cheerio = require('cheerio');
+import fetch from 'node-fetch';
+import cheerio from 'cheerio';
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const { url } = req.query;
 
   if (!url) {
@@ -48,4 +48,4 @@ module.exports = async (req, res) => {
     console.error(error);
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
-};
+}
